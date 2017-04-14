@@ -1,3 +1,6 @@
+// by: Zhiping
+
+#include <L2.h>
 #include <pegtl.hh>
 #include <pegtl/analyze.hh>
 #include <pegtl/contrib/raw_string.hh>
@@ -374,7 +377,44 @@ namespace L2 {
       seps
     > {};
 
+  /*
+   * Actions attached to grammar rules.
+   */
+  template< typename Rule >
+  struct action : pegtl::nothing< Rule > {};
+
+  template<> struct action < label > {
+    static void apply( const pegtl::input & in, L2::Function & p, std::vector<std::string> & v ) {
+      v.push_back(in.string());
+      // cout << "tinkering action label " << in.string() << endl;
+    }
+  };
+
   struct L2_grammer:
-    pegtl::must<entry_point_rule
-  > {};
+    pegtl::must<entry_point_rule> {};
+
+  /*
+   * Data structures required to parse
+   */
+  std::vector< L2_item > parsed_registers;
+
+
+  Function L2_parse_func_file (char *fileName) {
+    /*
+     * Check the grammar for some possible issues.
+     */
+    pegtl::analyze< L2::L2_function_rule >();
+    /*
+     * Parse.
+     */
+    L2::Function f;
+    // L1::Instruction ti; // temp instruction
+    std::vector<std::string> v;
+    pegtl::file_parser(fileName).parse< L2::L2_function_rule, L2::action > (f, v);
+
+    return f;
+  }
+
+
+
 }
