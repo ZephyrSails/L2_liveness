@@ -42,6 +42,13 @@ int main(int argc, char **argv) {
 
   L2::Program p = L2::L2_parse_func_file(argv[optind]);
 
+  for (auto f : p.functions) {
+    cout << "\n\n_" << f->name << ":";
+    // if (f->locals > 0) {
+    //   outputFile << "\n\tsubq $" << std::to_string(f->locals * 8) << ", %rsp";
+    // }
+  }
+
   cout << argv[optind] << endl;
 
 

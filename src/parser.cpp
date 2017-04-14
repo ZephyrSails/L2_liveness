@@ -398,7 +398,13 @@ namespace L2 {
        item->type = ITEM_REGISTER;
        item->name = str;
        item->value = -1;
-     } else { // number
+     } else if (str[0] == '.') {
+       item->type = ITEM_VAR;
+       str.erase(0, 1);
+       item->name = str;
+       item->value = -1;
+     }
+       else { // number
        item->type = ITEM_NUMBER;
        item->value = std::stoi(str);
      }
@@ -407,8 +413,9 @@ namespace L2 {
    //
    Item * new_item2(std::string reg, std::string offset) {
      Item *item = new Item();
-     item->type = ITEM_REGISTER;
-     item->name = reg;
+     item = new_item(reg);
+    //  item->type = ITEM_REGISTER;
+    //  item->name = reg;
      item->value = std::stoi(offset);
      return item;
    }
@@ -635,6 +642,15 @@ namespace L2 {
     }
   };
 
+  template<> struct action < var > {
+    static void apply( const pegtl::input & in, L2::Program & p, std::vector<std::string> & v ) {
+      std::string token = in.string();
+      token.insert(0, ".");
+      v.push_back(token);
+      // cout << "tinkering action call " << in.string() << endl;
+    }
+  };
+
   template<> struct action < call > {
     static void apply( const pegtl::input & in, L2::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
@@ -775,7 +791,4 @@ namespace L2 {
 
     return p;
   }
-
-
-
 }

@@ -19,6 +19,7 @@ namespace L2 {
   const int ITEM_REGISTER = 0;
   const int ITEM_LABEL = 1;
   const int ITEM_NUMBER = 2;
+  const int ITEM_VAR = 3;
 
   const int INS_RETURN = 0;
   const int INS_LABEL = 1;
