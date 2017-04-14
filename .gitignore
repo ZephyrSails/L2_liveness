@@ -1,0 +1,3 @@
+/bin/*
+/tests/liveness/*.tmp
+/obj/*.o
