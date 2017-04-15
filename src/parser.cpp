@@ -389,6 +389,7 @@ namespace L2 {
    */
 
    Item * new_item(std::string str) {
+    //  cout << str << " new ITEM";
      Item *item = new Item();
      if (str[0] == ':') { // label
        item->type = ITEM_LABEL;
@@ -398,15 +399,16 @@ namespace L2 {
        item->type = ITEM_REGISTER;
        item->name = str;
        item->value = -1;
-     } else if (str[0] == '.') {
-       item->type = ITEM_VAR;
-       str.erase(0, 1);
-       item->name = str;
-       item->value = -1;
-     }
-       else { // number
-       item->type = ITEM_NUMBER;
-       item->value = std::stoi(str);
+     } else {
+       try { // number
+         item->value = std::stoi(str);
+         item->type = ITEM_NUMBER;
+       } catch(const std::exception& e) { // var
+         item->type = ITEM_VAR;
+         str.erase(0, 1);
+         item->name = str;
+         item->value = -1;
+       }
      }
      return item;
    }
@@ -644,9 +646,12 @@ namespace L2 {
 
   template<> struct action < var > {
     static void apply( const pegtl::input & in, L2::Program & p, std::vector<std::string> & v ) {
-      std::string token = in.string();
-      token.insert(0, ".");
-      v.push_back(token);
+      // cout << in.string();
+      // std::string token = in.string();
+      // token.insert(0, ".");
+      // cout << token << " action";
+      // v.push_back(token);
+      v.push_back(in.string());
       // cout << "tinkering action call " << in.string() << endl;
     }
   };
@@ -766,6 +771,14 @@ namespace L2 {
   template<> struct action < label > {
     static void apply( const pegtl::input & in, L2::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
+      // cout << "tinkering action label " << in.string() << endl;
+    }
+  };
+
+  template<> struct action < L2_instruction > {
+    static void apply( const pegtl::input & in, L2::Program & p, std::vector<std::string> & v ) {
+      // v.push_back(in.string());
+      cout << in.string() << "\n";
       // cout << "tinkering action label " << in.string() << endl;
     }
   };
