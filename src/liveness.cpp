@@ -27,7 +27,9 @@ std::set<std::string> args_regs = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 // utility
 void insert_item_to_set(std::set<std::string> * s, L2::Item * i) {
   if (i->type == L2::ITEM_REGISTER || i->type == L2::ITEM_VAR) {
-    s->insert(i->name);
+    if (i->name != "rsp") {
+      s->insert(i->name);
+    }
   }
 }
 
@@ -64,7 +66,7 @@ void gen_gen_kill(std::set<std::string> * GEN, std::set<std::string> * KILL, L2:
             insert_item_to_set(GEN, i->items.at(1));
             break;
     case L2::INS_CALL:
-            cout << "fffff\n";
+            // cout << "fffff\n";
             union_set(GEN, &args_regs);
             // GEN->insert(args_regs.begin(), args_regs.end());
             insert_item_to_set(GEN, i->items.at(0));
@@ -95,7 +97,7 @@ void gen_gen_kill(std::set<std::string> * GEN, std::set<std::string> * KILL, L2:
             break;
     case L2::INS_STACK:
             insert_item_to_set(KILL, i->items.at(0));
-            KILL->insert("rsp");
+            // KILL->insert("rsp");
             break;
     default:
             break;

@@ -411,39 +411,37 @@ namespace L2 {
    * Helpers
    */
 
-   Item * new_item(std::string str) {
-    //  cout << str << " new ITEM";
-     Item *item = new Item();
-     if (str[0] == ':') { // label
-       item->type = ITEM_LABEL;
-       str.erase(0, 1);  // remove ":"
-       item->name = str;
-     } else if (str[0] == 'r') { // register
-       item->type = ITEM_REGISTER;
+  Item * new_item(std::string str) {
+  //  cout << str << " new ITEM\n";
+   Item *item = new Item();
+   if (str[0] == ':') { // label
+     item->type = ITEM_LABEL;
+     str.erase(0, 1);  // remove ":"
+     item->name = str;
+   } else if (str[0] == 'r') { // register
+     item->type = ITEM_REGISTER;
+     item->name = str;
+     item->value = -1;
+   } else {
+     try { // number
+       item->value = std::stoi(str);
+       item->type = ITEM_NUMBER;
+     } catch(const std::exception& e) { // var
+       item->type = ITEM_VAR;
+      //  str.erase(0, 1);
        item->name = str;
        item->value = -1;
-     } else {
-       try { // number
-         item->value = std::stoi(str);
-         item->type = ITEM_NUMBER;
-       } catch(const std::exception& e) { // var
-         item->type = ITEM_VAR;
-        //  str.erase(0, 1);
-         item->name = str;
-         item->value = -1;
-       }
      }
-     return item;
    }
-   //
-   Item * new_item2(std::string reg, std::string offset) {
-     Item *item = new Item();
-     item = new_item(reg);
-    //  item->type = ITEM_REGISTER;
-    //  item->name = reg;
-     item->value = std::stoi(offset);
-     return item;
-   }
+   return item;
+  }
+  //
+  Item * new_item2(std::string reg, std::string offset) {
+   Item *item = new Item();
+   item = new_item(reg);
+   item->value = std::stoi(offset);
+   return item;
+  }
 
   /*
    * Actions attached to grammar rules.
@@ -594,14 +592,9 @@ namespace L2 {
 
       // cout << "tinkering " << v.at(0) << " ?? " << v.at(1) << " - " << v.at(2) << endl;
 
-
       Item *item = new Item();
-      item->type = ITEM_REGISTER;
-      item->name = v.at(1);
-      // cout << "call";
-      // cout << v.at(2);
-      item->value = std::stoi(v.at(2));
-      // cout << "call2";
+      L2::new_item2(v.at(1), v.at(2));
+
       newIns->items.push_back(item);
       // cout << "call3";
       currentF->instructions.push_back(newIns);
