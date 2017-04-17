@@ -1,3 +1,5 @@
 /bin/*
 /tests/liveness/*.tmp
 /obj/*.o
+/lib/tap/*
+/lib/temp/*

@@ -100,6 +100,29 @@ namespace L2 {
       >
     > {};
 
+  // struct L2_var:
+  //   pegtl::at<
+  //     pegtl::seq<
+  //       pegtl::plus<
+  //         pegtl::sor<
+  //           pegtl::alpha,
+  //           pegtl::one< '_' >
+  //         >
+  //       >,
+  //       pegtl::star<
+  //         pegtl::sor<
+  //           pegtl::alpha,
+  //           pegtl::one< '_' >,
+  //           pegtl::digit
+  //         >
+  //       >
+  //     >,
+  //     pegtl::not_at<
+  //       // pegtl::string < 'c', 'a', 'l', 'l' >
+  //       call
+  //     >
+  //   > {};
+
   struct L2_label:
     pegtl::seq<
       pegtl::one<':'>,
@@ -321,16 +344,6 @@ namespace L2 {
     pegtl::sor<
       pegtl::seq<
         pegtl::one<'('>,
-        pegtl::sor<
-          ins_w_start,
-          ins_mem_start,
-          ins_cjump
-        >,
-        pegtl::one<')'>
-      >,
-      ins_label,
-      pegtl::seq<
-        pegtl::one<'('>,
         seps,
         pegtl::sor<
           ins_goto,
@@ -339,7 +352,17 @@ namespace L2 {
         >,
         seps,
         pegtl::one<')'>
-      >
+      >,
+      pegtl::seq<
+        pegtl::one<'('>,
+        pegtl::sor<
+          ins_mem_start,
+          ins_cjump,
+          ins_w_start
+        >,
+        pegtl::one<')'>
+      >,
+      ins_label
     > {};
 
   struct L2_function_rule:
@@ -389,7 +412,7 @@ namespace L2 {
    */
 
    Item * new_item(std::string str) {
-    //  cout << str << " new ITEM";
+     cout << str << " new ITEM";
      Item *item = new Item();
      if (str[0] == ':') { // label
        item->type = ITEM_LABEL;
@@ -576,7 +599,7 @@ namespace L2 {
       item->type = ITEM_REGISTER;
       item->name = v.at(1);
       // cout << "call";
-      cout << v.at(2);
+      // cout << v.at(2);
       item->value = std::stoi(v.at(2));
       // cout << "call2";
       newIns->items.push_back(item);
@@ -783,7 +806,7 @@ namespace L2 {
   template<> struct action < L2_instruction > {
     static void apply( const pegtl::input & in, L2::Program & p, std::vector<std::string> & v ) {
       // v.push_back(in.string());
-      cout << in.string() << "\n";
+      // cout << in.string() << "\n";
       // cout << "tinkering action label " << in.string() << endl;
     }
   };
