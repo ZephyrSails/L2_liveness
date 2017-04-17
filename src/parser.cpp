@@ -412,7 +412,7 @@ namespace L2 {
    */
 
    Item * new_item(std::string str) {
-     cout << str << " new ITEM";
+    //  cout << str << " new ITEM";
      Item *item = new Item();
      if (str[0] == ':') { // label
        item->type = ITEM_LABEL;

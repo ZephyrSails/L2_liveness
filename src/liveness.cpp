@@ -31,10 +31,21 @@ void insert_item_to_set(std::set<std::string> * s, L2::Item * i) {
   }
 }
 
+void union_set(std::set<std::string> * s, std::set<std::string> * t) {
+  s->insert(t->begin(), t->end());
+}
+
+std::set<std::string> minus_set(std::set<std::string> * s, std::set<std::string> * t) {
+  std::set<std::string> result;
+  std::set_difference(s->begin(), s->end(), t->begin(), t->end(), std::inserter(result, result.end()));
+  return result;
+}
+
 void gen_gen_kill(std::set<std::string> * GEN, std::set<std::string> * KILL, L2::Instruction * i) {
   switch (i->type) {
     case L2::INS_RETURN:
             GEN->insert(callee_save_regs.begin(), callee_save_regs.end());
+            GEN->insert("rax");
             break;
     // case L2::INS_LABEL:
     //         break;
@@ -54,9 +65,11 @@ void gen_gen_kill(std::set<std::string> * GEN, std::set<std::string> * KILL, L2:
             break;
     case L2::INS_CALL:
             cout << "fffff\n";
-            GEN->insert(args_regs.begin(), args_regs.end());
+            union_set(GEN, &args_regs);
+            // GEN->insert(args_regs.begin(), args_regs.end());
             insert_item_to_set(GEN, i->items.at(0));
-            KILL->insert(caller_save_regs.begin(), caller_save_regs.end());
+            union_set(KILL, &caller_save_regs);
+            // KILL->insert(caller_save_regs.begin(), caller_save_regs.end());
             KILL->insert("rax");
             break;
     // case L2::INS_GOTO:
@@ -88,16 +101,16 @@ void gen_gen_kill(std::set<std::string> * GEN, std::set<std::string> * KILL, L2:
             break;
   }
 
-  cout << "\nGEN: ";
-  for (auto reg : *GEN)
-  {
-      cout << reg << " ";
-  }
-  cout << " ///// KILL: ";
-  for (auto reg : *KILL)
-  {
-      cout << reg << " ";
-  }
+  // cout << "\nGEN: ";
+  // for (auto reg : *GEN)
+  // {
+  //     cout << reg << " ";
+  // }
+  // cout << " ///// KILL: ";
+  // for (auto reg : *KILL)
+  // {
+  //     cout << reg << " ";
+  // }
 }
 
 void liveness_analyze(L2::Function *func) {
@@ -119,22 +132,48 @@ void liveness_analyze(L2::Function *func) {
   while (converge_count != n) {
     converge_count = 0;
 
-    for (int i = 0; i < n; i++) {
+    for (int k = 0; k < n; k++) {
       std::set <std::string> newIn;
       std::set <std::string> newOut;
 
       // IN[i] = GEN[i] U (OUT[i] - KILL[i])
-      // OUT[i] = U (s a successor of i) IN[s]
+      union_set(&newIn, &GEN[k]);
+      std::set <std::string> diff = minus_set(&OUT[k], &KILL[k]);
+      union_set(&newIn, &diff);
 
-      if (IN[i] == newIn && OUT[i] == newOut) {
+      // OUT[i] = U (s a successor of i) IN[s]
+      if (k != n-1) {
+        union_set(&newOut, &IN[k+1]);
+      }
+
+
+      if (IN[k] == newIn && OUT[k] == newOut) {
         converge_count++;
       } else {
-        IN[i] = newIn;
-        OUT[i] = newOut;
+        IN[k] = newIn;
+        OUT[k] = newOut;
       }
     }
   }
   // print in & out
+  cout << "(\n(in\n";
+  for (int k = 0; k < n; k++) {
+    cout << "(";
+    for (auto reg : IN[k]) {
+        cout << reg << " ";
+    }
+    cout << ")\n";
+  }
+  cout << ")\n\n(out\n";
+  for (int k = 0; k < n; k++) {
+    cout << "(";
+    for (auto reg : OUT[k]) {
+        cout << reg << " ";
+    }
+    cout << ")\n";
+  }
+
+  cout << ")\n\n)";
 
 }
 
@@ -162,7 +201,7 @@ int main(int argc, char **argv) {
   L2::Program p = L2::L2_parse_func_file(argv[optind]);
 
   for (auto f : p.functions) {
-    cout << "\n\n_" << f->name << ":";
+    // cout << "\n\n_" << f->name << ":";
 
     liveness_analyze(f);
     // if (f->locals > 0) {
@@ -170,7 +209,7 @@ int main(int argc, char **argv) {
     // }
   }
 
-  cout << "\n" << argv[optind] << endl;
+  // cout << "\n" << argv[optind] << endl;
 
 
   // cout << "(\n";
