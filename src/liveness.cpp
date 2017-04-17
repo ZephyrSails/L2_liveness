@@ -19,6 +19,125 @@
 
 using namespace std;
 
+// std::set <std::string> callee_save_regs = ;
+std::set<std::string> callee_save_regs = {"r12", "r13", "r14", "r15", "rbp", "rbx"};
+std::set<std::string> caller_save_regs = {"r10", "r11", "r8", "r9", "rax", "rcx", "rdi", "rdx", "rsi"};
+std::set<std::string> args_regs = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+
+// utility
+void insert_item_to_set(std::set<std::string> * s, L2::Item * i) {
+  if (i->type == L2::ITEM_REGISTER || i->type == L2::ITEM_VAR) {
+    s->insert(i->name);
+  }
+}
+
+void gen_gen_kill(std::set<std::string> * GEN, std::set<std::string> * KILL, L2::Instruction * i) {
+  switch (i->type) {
+    case L2::INS_RETURN:
+            GEN->insert(callee_save_regs.begin(), callee_save_regs.end());
+            break;
+    // case L2::INS_LABEL:
+    //         break;
+    case L2::INS_MEM_START:
+            insert_item_to_set(KILL, i->items.at(0));
+            if (i->op != "<-") {
+              insert_item_to_set(GEN, i->items.at(0));
+            }
+            insert_item_to_set(GEN, i->items.at(1));
+            break;
+    case L2::INS_W_START:
+            insert_item_to_set(KILL, i->items.at(0));
+            if (i->op != "<-") {
+              insert_item_to_set(GEN, i->items.at(0));
+            }
+            insert_item_to_set(GEN, i->items.at(1));
+            break;
+    case L2::INS_CALL:
+            cout << "fffff\n";
+            GEN->insert(args_regs.begin(), args_regs.end());
+            insert_item_to_set(GEN, i->items.at(0));
+            KILL->insert(caller_save_regs.begin(), caller_save_regs.end());
+            KILL->insert("rax");
+            break;
+    // case L2::INS_GOTO:
+    //         break;
+    case L2::INS_INC_DEC:
+            insert_item_to_set(KILL, i->items.at(0));
+            insert_item_to_set(GEN, i->items.at(0));
+            break;
+    case L2::INS_CISC:
+            insert_item_to_set(KILL, i->items.at(0));
+            insert_item_to_set(GEN, i->items.at(1));
+            insert_item_to_set(GEN, i->items.at(2));
+            break;
+    case L2::INS_CMP:
+            insert_item_to_set(KILL, i->items.at(0));
+            insert_item_to_set(GEN, i->items.at(1));
+            insert_item_to_set(GEN, i->items.at(2));
+            break;
+    case L2::INS_CJUMP:
+            insert_item_to_set(KILL, i->items.at(0));
+            insert_item_to_set(GEN, i->items.at(1));
+            insert_item_to_set(GEN, i->items.at(2));
+            break;
+    case L2::INS_STACK:
+            insert_item_to_set(KILL, i->items.at(0));
+            KILL->insert("rsp");
+            break;
+    default:
+            break;
+  }
+
+  cout << "\nGEN: ";
+  for (auto reg : *GEN)
+  {
+      cout << reg << " ";
+  }
+  cout << " ///// KILL: ";
+  for (auto reg : *KILL)
+  {
+      cout << reg << " ";
+  }
+}
+
+void liveness_analyze(L2::Function *func) {
+  int n = func->instructions.size();
+
+  std::set<std::string> GEN[n];
+  std::set<std::string> KILL[n];
+
+  for (int k = 0; k < n; k++) {
+    L2::Instruction *i = func->instructions.at(k);
+
+    gen_gen_kill(&GEN[k], &KILL[k], i);
+    // We need to build GEN and KILL here
+  }
+
+  std::set <std::string> IN[n];
+  std::set <std::string> OUT[n];
+  int converge_count;
+  while (converge_count != n) {
+    converge_count = 0;
+
+    for (int i = 0; i < n; i++) {
+      std::set <std::string> newIn;
+      std::set <std::string> newOut;
+
+      // IN[i] = GEN[i] U (OUT[i] - KILL[i])
+      // OUT[i] = U (s a successor of i) IN[s]
+
+      if (IN[i] == newIn && OUT[i] == newOut) {
+        converge_count++;
+      } else {
+        IN[i] = newIn;
+        OUT[i] = newOut;
+      }
+    }
+  }
+  // print in & out
+
+}
+
 int main(int argc, char **argv) {
   bool verbose;
 
@@ -44,6 +163,8 @@ int main(int argc, char **argv) {
 
   for (auto f : p.functions) {
     cout << "\n\n_" << f->name << ":";
+
+    liveness_analyze(f);
     // if (f->locals > 0) {
     //   outputFile << "\n\tsubq $" << std::to_string(f->locals * 8) << ", %rsp";
     // }

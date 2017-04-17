@@ -393,7 +393,7 @@ namespace L2 {
      Item *item = new Item();
      if (str[0] == ':') { // label
        item->type = ITEM_LABEL;
-       str.erase(0, 1);  // remove :
+       str.erase(0, 1);  // remove ":"
        item->name = str;
      } else if (str[0] == 'r') { // register
        item->type = ITEM_REGISTER;
@@ -405,7 +405,7 @@ namespace L2 {
          item->type = ITEM_NUMBER;
        } catch(const std::exception& e) { // var
          item->type = ITEM_VAR;
-         str.erase(0, 1);
+        //  str.erase(0, 1);
          item->name = str;
          item->value = -1;
        }
@@ -564,18 +564,23 @@ namespace L2 {
 
   template<> struct action < ins_call_func > {
     static void apply( const pegtl::input & in, L2::Program & p, std::vector<std::string> & v ) {
+
       L2::Function *currentF = p.functions.back();
       L2::Instruction *newIns = new L2::Instruction();
       newIns->type = L2::INS_CALL;
 
       // cout << "tinkering " << v.at(0) << " ?? " << v.at(1) << " - " << v.at(2) << endl;
 
+
       Item *item = new Item();
       item->type = ITEM_REGISTER;
       item->name = v.at(1);
+      // cout << "call";
+      cout << v.at(2);
       item->value = std::stoi(v.at(2));
+      // cout << "call2";
       newIns->items.push_back(item);
-
+      // cout << "call3";
       currentF->instructions.push_back(newIns);
       v.clear();
     }
@@ -649,7 +654,6 @@ namespace L2 {
       // cout << in.string();
       // std::string token = in.string();
       // token.insert(0, ".");
-      // cout << token << " action";
       // v.push_back(token);
       v.push_back(in.string());
       // cout << "tinkering action call " << in.string() << endl;
@@ -660,6 +664,7 @@ namespace L2 {
     static void apply( const pegtl::input & in, L2::Program & p, std::vector<std::string> & v ) {
       v.push_back(in.string());
       // cout << "tinkering action call " << in.string() << endl;
+      // cout << in.string();
     }
   };
 
@@ -787,7 +792,6 @@ namespace L2 {
    * Data structures required to parse
    */
   std::vector< L2_item > parsed_registers;
-
 
   Program L2_parse_func_file (char *fileName) {
     /*
