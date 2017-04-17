@@ -22,7 +22,8 @@ using namespace std;
 // std::set <std::string> callee_save_regs = ;
 std::set<std::string> callee_save_regs = {"r12", "r13", "r14", "r15", "rbp", "rbx"};
 std::set<std::string> caller_save_regs = {"r10", "r11", "r8", "r9", "rax", "rcx", "rdi", "rdx", "rsi"};
-std::set<std::string> args_regs = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+// std::set<std::string> args_regs = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+std::vector<std::string> args_regs = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
 // utility
 void insert_item_to_set(std::set<std::string> * s, L2::Item * i) {
@@ -35,6 +36,12 @@ void insert_item_to_set(std::set<std::string> * s, L2::Item * i) {
 
 void union_set(std::set<std::string> * s, std::set<std::string> * t) {
   s->insert(t->begin(), t->end());
+}
+
+void union_set(std::set<std::string> * s, std::vector<std::string> * t, int n) {
+  for (int i = 0; i < n; i++) {
+    s->insert(t->at(i));
+  }
 }
 
 std::set<std::string> minus_set(std::set<std::string> * s, std::set<std::string> * t) {
@@ -66,9 +73,8 @@ void gen_gen_kill(std::set<std::string> * GEN, std::set<std::string> * KILL, L2:
             insert_item_to_set(GEN, i->items.at(1));
             break;
     case L2::INS_CALL:
-            // cout << "fffff\n";
-            union_set(GEN, &args_regs);
-            // GEN->insert(args_regs.begin(), args_regs.end());
+            union_set(GEN, &args_regs, i->items.at(0)->value);
+            // GEN->insert("rdi");
             insert_item_to_set(GEN, i->items.at(0));
             union_set(KILL, &caller_save_regs);
             // KILL->insert(caller_save_regs.begin(), caller_save_regs.end());
