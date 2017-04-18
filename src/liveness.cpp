@@ -19,10 +19,8 @@
 
 using namespace std;
 
-// std::set <std::string> callee_save_regs = ;
 std::set<std::string> callee_save_regs = {"r12", "r13", "r14", "r15", "rbp", "rbx"};
 std::set<std::string> caller_save_regs = {"r10", "r11", "r8", "r9", "rax", "rcx", "rdi", "rdx", "rsi"};
-// std::set<std::string> args_regs = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 std::vector<std::string> args_regs = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
 // utility
@@ -47,6 +45,17 @@ void union_set(std::set<std::string> * s, std::vector<std::string> * t, int n) {
 std::set<std::string> minus_set(std::set<std::string> * s, std::set<std::string> * t) {
   std::set<std::string> result;
   std::set_difference(s->begin(), s->end(), t->begin(), t->end(), std::inserter(result, result.end()));
+  return result;
+}
+
+std::map<std::string, int> build_label_map(std::vector<L2::Instruction *> instructions) {
+  std::map<std::string, int> result;
+  for (int k = 0; k < instructions.size(); k++) {
+    L2::Instruction * i = instructions.at(k);
+    if (i->type == L2::INS::LABEL_INS) {
+      result[i->items.at(0)->name] = k;
+    }
+  }
   return result;
 }
 
@@ -95,9 +104,8 @@ void gen_gen_kill(std::set<std::string> * GEN, std::set<std::string> * KILL, L2:
             insert_item_to_set(GEN, i->items.at(2));
             break;
     case L2::INS::CJUMP:
-            insert_item_to_set(KILL, i->items.at(0));
+            insert_item_to_set(GEN, i->items.at(0));
             insert_item_to_set(GEN, i->items.at(1));
-            insert_item_to_set(GEN, i->items.at(2));
             break;
     case L2::INS::STACK:
             insert_item_to_set(KILL, i->items.at(0));
@@ -132,6 +140,8 @@ void liveness_analyze(L2::Function *func) {
     // We need to build GEN and KILL here
   }
 
+  std::map<std::string, int> labelNextIndexMap = build_label_map(func->instructions);
+
   std::set <std::string> IN[n];
   std::set <std::string> OUT[n];
   int converge_count;
@@ -148,16 +158,26 @@ void liveness_analyze(L2::Function *func) {
       union_set(&newIn, &diff);
 
       // OUT[i] = U (s a successor of i) IN[s]
-      if (k != n-1) {
-        // cjump & goto
+      std::vector< int > next_indexs;
 
-        // L2::INS::GOTO
-        // L2::INS::CJUMP
-
-        // For normal situation
-        union_set(&newOut, &IN[k+1]);
+      switch (func->instructions.at(k)->type) {
+        case L2::INS::GOTO:
+              next_indexs.push_back(labelNextIndexMap[func->instructions.at(k)->items.at(0)->name]);
+              break;
+        case L2::INS::CJUMP:
+              next_indexs.push_back(labelNextIndexMap[func->instructions.at(k)->items.at(2)->name]);
+              next_indexs.push_back(labelNextIndexMap[func->instructions.at(k)->items.at(3)->name]);
+              break;
+        default: // For normal situation
+              next_indexs.push_back(k+1);
+              break;
       }
-
+      union_set(&newOut, &OUT[k]);
+      for (int next_index : next_indexs) {
+        if (next_index < n) {
+          union_set(&newOut, &IN[next_index]);
+        }
+      }
 
       if (IN[k] == newIn && OUT[k] == newOut) {
         converge_count++;
