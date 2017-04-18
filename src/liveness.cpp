@@ -28,7 +28,7 @@ std::vector<std::string> args_regs = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 // utility
 void insert_item_to_set(std::set<std::string> * s, L2::Item * i) {
   if (i->type == L2::ITEM_REGISTER || i->type == L2::ITEM_VAR) {
-    if (i->name != "rsp") {
+    if (i->name != "rsp" && i->name != "print" && i->name != "allocate" && i->name != "array-error") {
       s->insert(i->name);
     }
   }

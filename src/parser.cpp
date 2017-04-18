@@ -406,13 +406,11 @@ namespace L2 {
   struct L2_grammer:
     pegtl::must<entry_point_rule> {};
 
-
   /*
    * Helpers
    */
 
   Item * new_item(std::string str) {
-  //  cout << str << " new ITEM\n";
    Item *item = new Item();
    if (str[0] == ':') { // label
      item->type = ITEM_LABEL;
@@ -592,11 +590,7 @@ namespace L2 {
 
       // cout << "tinkering " << v.at(0) << " ?? " << v.at(1) << " - " << v.at(2) << endl;
 
-      Item *item = new Item();
-      L2::new_item2(v.at(1), v.at(2));
-
-      newIns->items.push_back(item);
-      // cout << "call3";
+      newIns->items.push_back(L2::new_item2(v.at(1), v.at(2)));
       currentF->instructions.push_back(newIns);
       v.clear();
     }
