@@ -151,6 +151,7 @@ void liveness_analyze(L2::Function *func) {
     for (int k = 0; k < n; k++) {
       std::set <std::string> newIn;
       std::set <std::string> newOut;
+      L2::Instruction *cur_ins = func->instructions.at(k);
 
       // IN[i] = GEN[i] U (OUT[i] - KILL[i])
       union_set(&newIn, &GEN[k]);
@@ -160,13 +161,23 @@ void liveness_analyze(L2::Function *func) {
       // OUT[i] = U (s a successor of i) IN[s]
       std::vector< int > next_indexs;
 
-      switch (func->instructions.at(k)->type) {
+      switch (cur_ins->type) {
         case L2::INS::GOTO:
-              next_indexs.push_back(labelNextIndexMap[func->instructions.at(k)->items.at(0)->name]);
+              next_indexs.push_back(labelNextIndexMap[cur_ins->items.at(0)->name]);
               break;
         case L2::INS::CJUMP:
-              next_indexs.push_back(labelNextIndexMap[func->instructions.at(k)->items.at(2)->name]);
-              next_indexs.push_back(labelNextIndexMap[func->instructions.at(k)->items.at(3)->name]);
+              if (cur_ins->items.at(0)->type == L2::ITEM::NUMBER && cur_ins->items.at(1)->type == L2::ITEM::NUMBER) {
+                if ((cur_ins->op == "<=" && cur_ins->items.at(0)->value <= cur_ins->items.at(1)->value)
+                  || (cur_ins->op == "<" && cur_ins->items.at(0)->value < cur_ins->items.at(1)->value)
+                  || (cur_ins->op == "=" && cur_ins->items.at(0)->value == cur_ins->items.at(1)->value)) {
+                    next_indexs.push_back(labelNextIndexMap[cur_ins->items.at(2)->name]);
+                } else {
+                  next_indexs.push_back(labelNextIndexMap[cur_ins->items.at(3)->name]);
+                }
+              } else {
+                next_indexs.push_back(labelNextIndexMap[cur_ins->items.at(2)->name]);
+                next_indexs.push_back(labelNextIndexMap[cur_ins->items.at(3)->name]);
+              }
               break;
         default: // For normal situation
               next_indexs.push_back(k+1);
@@ -204,9 +215,7 @@ void liveness_analyze(L2::Function *func) {
     }
     cout << ")\n";
   }
-
   cout << ")\n\n)";
-
 }
 
 int main(int argc, char **argv) {
@@ -233,32 +242,8 @@ int main(int argc, char **argv) {
   L2::Program p = L2::L2_parse_func_file(argv[optind]);
 
   for (auto f : p.functions) {
-    // cout << "\n\n_" << f->name << ":";
-
     liveness_analyze(f);
-    // if (f->locals > 0) {
-    //   outputFile << "\n\tsubq $" << std::to_string(f->locals * 8) << ", %rsp";
-    // }
   }
 
-  // cout << "\n" << argv[optind] << endl;
-
-
-  // cout << "(\n";
-  // cout << "(in\n";
-  // cout << "(r12 r13 r14 r15 rax rbp rbx)\n";
-  // cout << "(myVar1 r12 r13 r14 r15 rax rbp rbx)\n";
-  // cout << "(myVar1 myVar2 r12 r13 r14 r15 rax rbp rbx)\n";
-  // cout << "(r12 r13 r14 r15 rax rbp rbx)\n";
-  // cout << ")\n";
-  // cout << "\n";
-  // cout << "(out\n";
-  // cout << "(myVar1 r12 r13 r14 r15 rax rbp rbx)\n";
-  // cout << "(myVar1 myVar2 r12 r13 r14 r15 rax rbp rbx)\n";
-  // cout << "(r12 r13 r14 r15 rax rbp rbx)\n";
-  // cout << "()\n";
-  // cout << ")\n";
-  // cout << "\n";
-  // cout << ")\n";
   return 0;
 }

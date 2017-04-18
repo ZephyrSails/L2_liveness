@@ -53,9 +53,7 @@ namespace L2 {
   struct Instruction {
     int type;     // defined by L1::INS_*TYPE*
     std::vector<L2::Item *> items;
-    // L1::Opperand op;
     std::string op;
-    // L1::Cmp cmp;  // 3 & 4 has cmp
   };
 
   struct Function {
