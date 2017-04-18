@@ -27,7 +27,7 @@ std::vector<std::string> args_regs = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
 // utility
 void insert_item_to_set(std::set<std::string> * s, L2::Item * i) {
-  if (i->type == L2::ITEM_REGISTER || i->type == L2::ITEM_VAR) {
+  if (i->type == L2::ITEM::REGISTER || i->type == L2::ITEM::VAR) {
     if (i->name != "rsp" && i->name != "print" && i->name != "allocate" && i->name != "array-error") {
       s->insert(i->name);
     }
@@ -52,56 +52,54 @@ std::set<std::string> minus_set(std::set<std::string> * s, std::set<std::string>
 
 void gen_gen_kill(std::set<std::string> * GEN, std::set<std::string> * KILL, L2::Instruction * i) {
   switch (i->type) {
-    case L2::INS_RETURN:
+    case L2::INS::RETURN:
             GEN->insert(callee_save_regs.begin(), callee_save_regs.end());
             GEN->insert("rax");
             break;
-    // case L2::INS_LABEL:
+    // case L2::INS::LABEL_INS:
     //         break;
-    case L2::INS_MEM_START:
+    case L2::INS::MEM_START:
             insert_item_to_set(KILL, i->items.at(0));
             if (i->op != "<-") {
               insert_item_to_set(GEN, i->items.at(0));
             }
             insert_item_to_set(GEN, i->items.at(1));
             break;
-    case L2::INS_W_START:
+    case L2::INS::W_START:
             insert_item_to_set(KILL, i->items.at(0));
             if (i->op != "<-") {
               insert_item_to_set(GEN, i->items.at(0));
             }
             insert_item_to_set(GEN, i->items.at(1));
             break;
-    case L2::INS_CALL:
+    case L2::INS::CALL:
             union_set(GEN, &args_regs, i->items.at(0)->value);
-            // GEN->insert("rdi");
             insert_item_to_set(GEN, i->items.at(0));
             union_set(KILL, &caller_save_regs);
-            // KILL->insert(caller_save_regs.begin(), caller_save_regs.end());
             KILL->insert("rax");
             break;
-    // case L2::INS_GOTO:
+    // case L2::INS::GOTO:
     //         break;
-    case L2::INS_INC_DEC:
+    case L2::INS::INC_DEC:
             insert_item_to_set(KILL, i->items.at(0));
             insert_item_to_set(GEN, i->items.at(0));
             break;
-    case L2::INS_CISC:
+    case L2::INS::CISC:
             insert_item_to_set(KILL, i->items.at(0));
             insert_item_to_set(GEN, i->items.at(1));
             insert_item_to_set(GEN, i->items.at(2));
             break;
-    case L2::INS_CMP:
+    case L2::INS::CMP:
             insert_item_to_set(KILL, i->items.at(0));
             insert_item_to_set(GEN, i->items.at(1));
             insert_item_to_set(GEN, i->items.at(2));
             break;
-    case L2::INS_CJUMP:
+    case L2::INS::CJUMP:
             insert_item_to_set(KILL, i->items.at(0));
             insert_item_to_set(GEN, i->items.at(1));
             insert_item_to_set(GEN, i->items.at(2));
             break;
-    case L2::INS_STACK:
+    case L2::INS::STACK:
             insert_item_to_set(KILL, i->items.at(0));
             // KILL->insert("rsp");
             break;
@@ -151,6 +149,12 @@ void liveness_analyze(L2::Function *func) {
 
       // OUT[i] = U (s a successor of i) IN[s]
       if (k != n-1) {
+        // cjump & goto
+
+        // L2::INS::GOTO
+        // L2::INS::CJUMP
+
+        // For normal situation
         union_set(&newOut, &IN[k+1]);
       }
 

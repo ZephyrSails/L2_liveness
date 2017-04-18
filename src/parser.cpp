@@ -413,19 +413,19 @@ namespace L2 {
   Item * new_item(std::string str) {
    Item *item = new Item();
    if (str[0] == ':') { // label
-     item->type = ITEM_LABEL;
+     item->type = L2::ITEM::LABEL;
      str.erase(0, 1);  // remove ":"
      item->name = str;
    } else if (str[0] == 'r') { // register
-     item->type = ITEM_REGISTER;
+     item->type = L2::ITEM::REGISTER;
      item->name = str;
      item->value = -1;
    } else {
      try { // number
        item->value = std::stoi(str);
-       item->type = ITEM_NUMBER;
+       item->type = L2::ITEM::NUMBER;
      } catch(const std::exception& e) { // var
-       item->type = ITEM_VAR;
+       item->type = L2::ITEM::VAR;
       //  str.erase(0, 1);
        item->name = str;
        item->value = -1;
@@ -502,26 +502,26 @@ namespace L2 {
       L2::Instruction *newIns = new L2::Instruction();
 
       if (v.size() == 3) { // no mem, two op
-        newIns->type = L2::INS_W_START;
+        newIns->type = L2::INS::W_START;
         // cout << "tinkering no mem assign: " << v.at(0) << " " << v.at(1) << " " << v.at(2) << endl;
         newIns->items.push_back(L2::new_item(v.at(0)));
         newIns->items.push_back(L2::new_item(v.at(2)));
         newIns->op = v.at(1);
 
       } else if (v.size() == 2) { // INS_INC_DEC
-        newIns->type = L2::INS_INC_DEC;
+        newIns->type = L2::INS::INC_DEC;
 
         // cout << "tinkering ins_inc_dec: " << v.at(0) << v.at(1) << endl;
         newIns->op = v.at(1);
         newIns->items.push_back(new_item(v.at(0)));
       } else if (v.size() == 4) {
         if (v.at(2) == "stack-arg") { // stack-arg
-          newIns->type = L2::INS_STACK;
+          newIns->type = L2::INS::STACK;
 
           newIns->items.push_back(new_item(v.at(0)));
           newIns->items.push_back(new_item(v.at(3)));
         } else { // CISC
-          newIns->type = L2::INS_CISC;
+          newIns->type = L2::INS::CISC;
 
           // cout << "tinkering CISC: " << v.at(0) << " @ " << v.at(1) << " " << v.at(2) << " " << v.at(3) << endl;
           newIns->items.push_back(new_item(v.at(0)));
@@ -529,13 +529,13 @@ namespace L2 {
           newIns->items.push_back(new_item2(v.at(2), v.at(3)));
         }
       } else if (v.at(2) == "mem") { // right mem two op
-        newIns->type = L2::INS_W_START;
+        newIns->type = L2::INS::W_START;
         // cout << "tinkering right mem (" << v.at(0) << " " << v.at(1) << " (" << v.at(3) << " " << v.at(4) << ")" << endl;
         newIns->items.push_back(L2::new_item(v.at(0)));
         newIns->items.push_back(L2::new_item2(v.at(3), v.at(4)));
         newIns->op = v.at(1);
       } else { // cmp, 5 cmp
-        newIns->type = L2::INS_CMP;
+        newIns->type = L2::INS::CMP;
 
         // cout << "tinkering cmp " << v.at(0) << " " << v.at(1) << " " << v.at(2) << " " << v.at(3) << " " << v.at(4)<< endl;
         newIns->items.push_back(L2::new_item(v.at(0)));
@@ -552,7 +552,7 @@ namespace L2 {
     static void apply( const pegtl::input & in, L2::Program & p, std::vector<std::string> & v ) {
       L2::Function *currentF = p.functions.back();
       L2::Instruction *newIns = new L2::Instruction();
-      newIns->type = L2::INS_MEM_START;
+      newIns->type = L2::INS::MEM_START;
 
       newIns->items.push_back(L2::new_item2(v.at(1), v.at(2)));
       newIns->items.push_back(L2::new_item(v.at(4)));
@@ -567,7 +567,7 @@ namespace L2 {
     static void apply( const pegtl::input & in, L2::Program & p, std::vector<std::string> & v ) {
       L2::Function *currentF = p.functions.back();
       L2::Instruction *newIns = new L2::Instruction();
-      newIns->type = L2::INS_CJUMP;
+      newIns->type = L2::INS::CJUMP;
 
       // cout << "tinkering cjump " << v.at(0) << " " << v.at(1) << " " << v.at(2) << " " << v.at(3) << " " << v.at(4)<< endl;
       newIns->items.push_back(L2::new_item(v.at(0)));
@@ -586,7 +586,7 @@ namespace L2 {
 
       L2::Function *currentF = p.functions.back();
       L2::Instruction *newIns = new L2::Instruction();
-      newIns->type = L2::INS_CALL;
+      newIns->type = L2::INS::CALL;
 
       // cout << "tinkering " << v.at(0) << " ?? " << v.at(1) << " - " << v.at(2) << endl;
 
@@ -603,7 +603,7 @@ namespace L2 {
 
       // cout << "tinkering call return" << endl;
 
-      newIns->type = L2::INS_RETURN;
+      newIns->type = L2::INS::RETURN;
 
       currentF->instructions.push_back(newIns);
       v.clear();
@@ -614,7 +614,7 @@ namespace L2 {
     static void apply( const pegtl::input & in, L2::Program & p, std::vector<std::string> & v ) {
       L2::Function *currentF = p.functions.back();
       L2::Instruction *newIns = new L2::Instruction();
-      newIns->type = L2::INS_LABEL;
+      newIns->type = L2::INS::LABEL_INS;
 
       L2::Item *newItem = new L2::Item();
       newIns->items.push_back(new_item(in.string()));
@@ -630,7 +630,7 @@ namespace L2 {
     static void apply( const pegtl::input & in, L2::Program & p, std::vector<std::string> & v ) {
       L2::Function *currentF = p.functions.back();
       L2::Instruction *newIns = new L2::Instruction();
-      newIns->type = L2::INS_GOTO;
+      newIns->type = L2::INS::GOTO;
 
       L2::Item *newItem = new L2::Item();
       newIns->items.push_back(new_item(v.at(0)));
